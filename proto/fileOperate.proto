@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+// option go_package = "../server/grpc";
+option go_package = "../client/grpc";
+
+service FileOperate {
+    rpc CopyFile (CopyFileReq) returns (FileOptRep) {}
+    rpc MoveFile (MoveFileReq) returns (FileOptRep) {}
+    rpc DeleteFile (DeleteFileReq) returns (FileOptRep) {}
+    rpc RenameFile (RenameFileReq) returns (FileOptRep) {}
+}
+
+message CopyFileReq {
+    string src = 1;
+    string dst = 2;
+}
+
+message MoveFileReq {
+    string src = 1;
+    string dst = 2;
+}
+
+message DeleteFileReq {
+    string path = 1;
+}
+
+message RenameFileReq {
+    string src = 1;
+    string dst = 2;
+}
+
+message FileOptRep {
+    bool success = 1;
+}
+
+
