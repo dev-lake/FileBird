@@ -1,6 +1,31 @@
 # File Bird
 **A Efficient File Transfer Software**
 
+### Features
+- Add server information
+- Show Server information
+- Delete Server
+- Upload local file to remote
+- Download reomte file to local
+- Transmit remote file to remote
+
+### TODO
+- 增加传输进度显示
+- 实现文件夹的递归传输
+- 在数据库添加pwd字段，实现 pwd/cd 命令和相对目录的传输
+- 增加身份验证
+- 在添加服务器时验证可用性
+- Server 端增加配置文件，配置监听地址、用户权限等
+- Server 端做成服务
+- Hash 校验
+
+### PRO Version TODO
+- Transfer file directly from remote to remote 
+- Encryption communication
+- User Rights Management
+- File Detail (Create time, Mod time, last open time and so on.)
+- GUI Client
+
 ## Compile
 ### Server
 ```bash
