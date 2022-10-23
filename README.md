@@ -14,20 +14,23 @@
 - list local/remote file
 
 ### TODO
-- 增加传输进度显示
+- ~~Show Progress bar~~ (complete)
 - 实现文件夹的递归传输
 - 在数据库添加pwd字段，实现 pwd/cd 命令和相对目录的传输
 - 增加身份验证
 - 在添加服务器时验证可用性
 - Server 端增加配置文件，配置监听地址、用户权限等
 - Server 端做成服务
-- Hash 校验
+- Hash Check
+- Transmission rate limit
+- 本地、远程外链下载（http, https）
 
 ### PRO Version TODO
 - Transfer file directly from remote to remote 
 - Encryption communication
 - User Rights Management
-- File Detail (Create time, Mod time, last open time and so on.)
+- File Detail (Create time, Mod time, last open， Hash time and so on.)
+- 本地、远程外链下载（http, https, ftp, sftp and so on.）
 - GUI Client
 
 ## Compile

@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/schollz/progressbar/v3"
 )
 
 func ShowServerTable(servers []ServerInfo, filter string) {
@@ -148,6 +149,13 @@ func MoveLocalFile(src string, dst string) bool {
 
 // Copy file
 func CopyLocalFile(src string, dst string) bool {
+	log.Println("trace CopyLocalFile")
+	// init progress bar
+	progressbar := progressbar.DefaultBytes(
+		GetLocalFileInfo(src).Size(),
+		"copying",
+	)
+
 	srcFile, err := os.Open(src)
 	if err != nil {
 		log.Panic(err)
@@ -162,7 +170,7 @@ func CopyLocalFile(src string, dst string) bool {
 	}
 	defer dstFile.Close()
 
-	_, err = io.Copy(dstFile, srcFile)
+	_, err = io.Copy(io.MultiWriter(dstFile, progressbar), srcFile)
 	if err != nil {
 		log.Panic(err)
 		return false
