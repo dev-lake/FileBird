@@ -8,6 +8,10 @@
 - Upload local file to remote
 - Download reomte file to local
 - Transmit remote file to remote
+- Copy local/remote file
+- Move local/remote file
+- Del local/remote file
+- list local/remote file
 
 ### TODO
 - 增加传输进度显示
