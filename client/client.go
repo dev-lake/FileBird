@@ -50,6 +50,12 @@ var (
 	// ls dir
 	ls      = app.Command("ls", "Show files in dir")
 	ls_file = ls.Arg("file", "File path").Required().String()
+	// pwd
+	pwd             = app.Command("pwd", "Show current dir")
+	pwd_server_name = pwd.Arg("name", "Server name").Default("").String()
+	// cd dir
+	cd             = app.Command("cd", "Change current dir")
+	cd_server_path = cd.Arg("path", "Server and Path").Required().String()
 	// copy file
 	cp          = app.Command("cp", "Copy file")
 	cp_src_file = cp.Arg("src_file", "Source file path").Required().String()
@@ -92,9 +98,21 @@ func main() {
 		// ls dir or file
 		info_list := GetDirFileInfoList(*ls_file)
 		ShowFileInfoListTable(info_list)
+	case pwd.FullCommand():
+		// show current dir
+		if *pwd_server_name == "localhost" || *pwd_server_name == "" {
+			dir, err := os.Getwd()
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println(dir)
+		} else {
+			fmt.Println(GetServerPwd(InitDB(), *pwd_server_name))
+		}
 	case cp.FullCommand():
 		println(*cp_src_file, *cp_dst_file)
 		CopyFile(*cp_src_file, *cp_dst_file)
+		// CopyLocalFile(*cp_src_file, *cp_dst_file)
 	case mv.FullCommand():
 		println(*mv_src_file, *mv_dst_file)
 		MoveFile(*mv_src_file, *mv_dst_file)

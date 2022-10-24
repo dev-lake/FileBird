@@ -19,15 +19,15 @@ func ShowServerTable(servers []ServerInfo, filter string) {
 	t := table.NewWriter()
 	t.SetStyle(table.StyleRounded)
 	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"#", "Name", "Addr", "Port"})
+	t.AppendHeader(table.Row{"#", "Name", "Addr", "Port", "User", "Password", "HomeDir", "Pwd", "Description"})
 	if filter == "" {
 		for i, server := range servers {
-			t.AppendRow(table.Row{i, server.Name, server.Addr, server.Port})
+			t.AppendRow(table.Row{i, server.Name, server.Addr, server.Port, server.User, server.Pass, server.Home, server.Pwd, server.Desc})
 		}
 	} else {
 		for i, server := range servers {
 			if server.Name == filter {
-				t.AppendRow(table.Row{i, server.Name, server.Addr, server.Port})
+				t.AppendRow(table.Row{i, server.Name, server.Addr, server.Port, server.User, server.Pass, server.Home, server.Pwd, server.Desc})
 			}
 		}
 	}
@@ -186,4 +186,13 @@ func DeleteLocalFile(path string) bool {
 		return false
 	}
 	return true
+}
+
+// Get linux current user
+func GetLinuxCurrentUser() (*user.User, error) {
+	user, err := user.Current()
+	if err != nil {
+		log.Panic(err)
+	}
+	return user, nil
 }

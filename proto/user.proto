@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+option go_package = "../server/grpc";
+// option go_package = "../client/grpc";
+
+service User {
+    rpc GetUser (GetUserReq) returns (GetUserRep) {}
+}
+
+message GetUserReq {}
+
+message GetUserRep {
+    string uid = 1;
+    string gid = 2;
+    string username = 3; // login name
+    // Name is the user's real or display name.
+	// It might be blank.
+	// On POSIX systems, this is the first (or only) entry in the GECOS field
+	// list.
+	// On Windows, this is the user's display name.
+	// On Plan 9, this is the contents of /dev/user.
+    string name = 4;
+    string home_dir = 5;
+}

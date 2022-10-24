@@ -120,3 +120,12 @@ func GetFileUserAndGroupName(fStat fs.FileInfo) (username string, groupname stri
 	}
 	return usr.Username, group.Name
 }
+
+// Get linux current user
+func GetLinuxCurrentUser() (*user.User, error) {
+	user, err := user.Current()
+	if err != nil {
+		log.Panic(err)
+	}
+	return user, nil
+}

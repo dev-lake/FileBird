@@ -1,24 +1,31 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
 type ServerInfo struct {
 	gorm.Model
-	Name string
+	Name string `gorm:"unique"`
 	Addr string
 	Port int
+	User string // user name
 	Pass string // password
+	Home string // home directory
+	Pwd  string // current directory
 	Desc string // description
 }
 
 var (
-	db_path = "filebird.db"
+	db_path = "data/filebird.db"
 )
 
 func InitDB() *gorm.DB {
+	os.MkdirAll("data", 0755)
 	db, err := gorm.Open(sqlite.Open(db_path), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
@@ -35,8 +42,32 @@ func DeleteServer(db *gorm.DB, name string) {
 }
 
 // add server
-func AddServer(db *gorm.DB, name string, addr string, port int) {
-	db.Create(&ServerInfo{Name: name, Addr: addr, Port: port})
+func AddServer(db *gorm.DB, server_name string, addr string, port int) error {
+	server := ServerInfo{Name: server_name, Addr: addr, Port: port}
+	user_info, err := GetRemoteUserInfo(server)
+	if err != nil {
+		fmt.Println("User Check Failed, Continue Add Server? (y/n): ")
+		var input string
+		fmt.Scanln(&input)
+		if input == "y" {
+			db.Create(&server)
+			fmt.Println("Server Added.")
+			return err
+		}
+		fmt.Println("Server Add Cancled.")
+	}
+	db.Create(
+		&ServerInfo{
+			Name: server_name,
+			Addr: addr,
+			Port: port,
+			User: user_info.Username,
+			Home: user_info.HomeDir,
+			Pwd:  user_info.HomeDir,
+		},
+	)
+	fmt.Println("Server Added.")
+	return nil
 }
 
 // show server
@@ -44,6 +75,13 @@ func ShowServer(db *gorm.DB) []ServerInfo {
 	var servers []ServerInfo
 	db.Find(&servers)
 	return servers
+}
+
+// get server pwd field
+func GetServerPwd(db *gorm.DB, name string) string {
+	var server ServerInfo
+	db.Where("name = ?", name).First(&server)
+	return server.Pwd
 }
 
 // get server
