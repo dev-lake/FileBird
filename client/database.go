@@ -43,6 +43,12 @@ func DeleteServer(db *gorm.DB, name string) {
 
 // add server
 func AddServer(db *gorm.DB, server_name string, addr string, port int) error {
+	// check server name
+	err := CheckServerName(server_name)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
 	server := ServerInfo{Name: server_name, Addr: addr, Port: port}
 	user_info, err := GetRemoteUserInfo(server)
 	if err != nil {
@@ -110,4 +116,9 @@ func ModifyServerPort(db *gorm.DB, name string, port int) {
 // modify server name
 func ModifyServerName(db *gorm.DB, name string, new_name string) {
 	db.Model(&ServerInfo{}).Where("name = ?", name).Update("name", new_name)
+}
+
+// modify server pwd
+func ModifyServerPwd(db *gorm.DB, name string, pwd string) {
+	db.Model(&ServerInfo{}).Where("name = ?", name).Update("pwd", pwd)
 }

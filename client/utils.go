@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -37,7 +38,13 @@ func ShowServerTable(servers []ServerInfo, filter string) {
 
 // extract server_name and file_path from server_name:file_path
 func ExtractServerNameAndFilePath(serverNameAndFilePath string) (serverName string, filePath string) {
+	if serverNameAndFilePath == "" {
+		return "localhost", ""
+	}
 	for i, v := range serverNameAndFilePath {
+		if v == '/' || v == '\\' || i > ServerNameMaxLength { // no server name, only file path
+			return "localhost", serverNameAndFilePath
+		}
 		if v == ':' {
 			serverName = serverNameAndFilePath[:i]
 			filePath = serverNameAndFilePath[i+1:]
@@ -195,4 +202,23 @@ func GetLinuxCurrentUser() (*user.User, error) {
 		log.Panic(err)
 	}
 	return user, nil
+}
+
+// Check server name
+func CheckServerName(serverName string) error {
+	if serverName == "" {
+		return errors.New("server name can NOT be empty")
+	}
+	for _, name := range IllegalServerNames {
+		if name == serverName {
+			return errors.New("server name can NOT be \"" + name + "\"")
+		}
+	}
+	for i, v := range serverName {
+		if v == '/' || v == '\\' || i > ServerNameMaxLength || v == ':' {
+			return errors.New("server name can NOT contain '/' '\\' : and length can NOT be more than " + strconv.Itoa(ServerNameMaxLength))
+		}
+	}
+
+	return nil
 }

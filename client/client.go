@@ -2,17 +2,25 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 	pb "lake.dev/filebird/client/grpc"
 )
 
 const (
-	Version string = "v0.1.0"
+	Version             string = "v0.1.0"
+	ServerNameMaxLength int    = 20
+)
+
+var (
+	IllegalServerNames = [...]string{"localhost", "local"}
 )
 
 type FileInfo struct {
@@ -49,13 +57,13 @@ var (
 	dest_file = info.Arg("file", "File path").Required().String()
 	// ls dir
 	ls      = app.Command("ls", "Show files in dir")
-	ls_file = ls.Arg("file", "File path").Required().String()
+	ls_file = ls.Arg("file", "File path").Default("").String()
 	// pwd
 	pwd             = app.Command("pwd", "Show current dir")
 	pwd_server_name = pwd.Arg("name", "Server name").Default("").String()
 	// cd dir
 	cd             = app.Command("cd", "Change current dir")
-	cd_server_path = cd.Arg("path", "Server and Path").Required().String()
+	cd_server_path = cd.Arg("path", "Server and Path").Required().String() // format: server_name:path
 	// copy file
 	cp          = app.Command("cp", "Copy file")
 	cp_src_file = cp.Arg("src_file", "Source file path").Required().String()
@@ -92,7 +100,7 @@ func main() {
 		os.Remove(db_path)
 	case info.FullCommand():
 		// get file info
-		file_info := GetFileInfo(*dest_file)
+		file_info, _ := GetFileInfo(*dest_file)
 		ShowFileInfoTable(file_info)
 	case ls.FullCommand():
 		// ls dir or file
@@ -107,8 +115,16 @@ func main() {
 			}
 			fmt.Println(dir)
 		} else {
-			fmt.Println(GetServerPwd(InitDB(), *pwd_server_name))
+			// Extract server name and path
+			// server_name, _ := ExtractServerNameAndFilePath(*pwd_server_name)
+			var server_name string = *pwd_server_name
+			if strings.HasSuffix(server_name, ":") {
+				server_name = (*pwd_server_name)[:len(*pwd_server_name)-1]
+			}
+			fmt.Println(GetServerPwd(InitDB(), server_name))
 		}
+	case cd.FullCommand():
+		ChangeDir(*cd_server_path)
 	case cp.FullCommand():
 		println(*cp_src_file, *cp_dst_file)
 		CopyFile(*cp_src_file, *cp_dst_file)
@@ -124,7 +140,7 @@ func main() {
 }
 
 // get file info from remote or local
-func GetFileInfo(file_path string) (fileInfo *FileInfo) {
+func GetFileInfo(file_path string) (*FileInfo, error) {
 	// get server info
 	server_name, path := ExtractServerNameAndFilePath(file_path)
 	if server_name == "localhost" {
@@ -139,7 +155,7 @@ func GetFileInfo(file_path string) (fileInfo *FileInfo) {
 			Mode:      file_info.Mode(),
 			UserName:  uname,
 			GroupName: gname,
-		}
+		}, nil
 	} else {
 		server_info := GetServer(InitDB(), server_name)
 		fmt.Println(path, server_info.Addr, server_info.Port)
@@ -158,6 +174,7 @@ func GetFileInfo(file_path string) (fileInfo *FileInfo) {
 		res, err := grpcClient.GetFileInfo(context.Background(), &req)
 		if err != nil {
 			log.Fatalf("Call Route err: %v", err)
+			return nil, err
 		}
 		// log.Println(res)
 		return &FileInfo{
@@ -169,7 +186,7 @@ func GetFileInfo(file_path string) (fileInfo *FileInfo) {
 			Mode:      fs.FileMode(res.Mode),
 			UserName:  res.UserName,
 			GroupName: res.GroupName,
-		}
+		}, nil
 	}
 }
 
@@ -178,6 +195,9 @@ func GetDirFileInfoList(dir_path string) (fileInfoList []*FileInfo) {
 	// get server info
 	server_name, path := ExtractServerNameAndFilePath(dir_path)
 	if server_name == "localhost" {
+		if path == "" {
+			path = "."
+		}
 		file_info_list := ReadLocalDir(path)
 		for _, file_info := range file_info_list {
 			uname, gname := GetFileUserAndGroupName(file_info)
@@ -204,6 +224,10 @@ func GetDirFileInfoList(dir_path string) (fileInfoList []*FileInfo) {
 		// Establish gRPC connection
 		grpcClient := pb.NewFileInfoClient(conn)
 
+		// if path is empty, set it to "server_info.Pwd"
+		if path == "" {
+			path = server_info.Pwd
+		}
 		// Call gRPC method
 		req := pb.FileReq{
 			FilePath: path,
@@ -325,4 +349,44 @@ func DeleteFile(file_path string) (success bool) {
 		DeleteRemoteFile(server, path)
 		return true
 	}
+}
+
+// change dir
+// server_name format: server_name:dir_path
+func ChangeDir(server_path string) error {
+	// get server info
+	server_name, path := ExtractServerNameAndFilePath(server_path)
+	if server_name == "localhost" || server_name == "" { // local
+		fmt.Println("To Change Local Position, Please Use 'cd' Command.")
+		return nil
+	}
+	// get server info
+	server := GetServer(InitDB(), server_name)
+	// if path is empty, set it to "server_info.Home"
+	if path == "" {
+		path = server.Home
+	}
+	// Judage weather path is absolute path(windows and linux), if not, add prefix
+	var absPath string
+	if !filepath.IsAbs(path) {
+		fmt.Println("path", path)
+		absPath = filepath.Join(server.Pwd, path)
+	} else {
+		absPath = path
+	}
+	log.Println("Change Dir:", absPath)
+	// get fileinfo and check path exists or not
+	file_info, err := GetFileInfo(server_name + ":" + absPath)
+	if err != nil {
+		fmt.Println("Fail to Change Dir:", err)
+		return err
+	}
+	if !file_info.IsDir {
+		fmt.Println(file_info.Name, "is not a directory.")
+		return errors.New(file_info.Name + " is not a directory.")
+	}
+
+	// change dir
+	ModifyServerPwd(InitDB(), server_name, absPath)
+	return nil
 }
