@@ -6,6 +6,8 @@ option go_package = "../server/grpc";
 service FileInfo {
     rpc GetFileInfo(FileReq) returns (RegularFileInfo) {};
     rpc GetDirFileInfo(FileReq) returns (DirFileInfoList) {};
+    rpc IsFileExist(FileReq) returns (FileExistRep) {};
+    rpc FileIsDir(FileReq) returns (FileIsDirRep) {};
 }
 
 message FileReq {
@@ -23,9 +25,18 @@ message RegularFileInfo {
     string createTime = 8;
     string modifyTime = 9;
     string lastOpenTime = 10;
+    bool exsit = 11;
 }
 
 message DirFileInfoList {
     string path = 1;
     repeated RegularFileInfo fileInfoList = 2;
+}
+
+message FileExistRep {
+    bool exsit = 1;
+}
+
+message FileIsDirRep {
+    bool isDir = 1;
 }

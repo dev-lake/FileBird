@@ -156,7 +156,7 @@ func MoveLocalFile(src string, dst string) bool {
 
 // Copy file
 func CopyLocalFile(src string, dst string) bool {
-	log.Println("trace CopyLocalFile")
+	log.Println("trace CopyLocalFile", src, dst)
 	// init progress bar
 	progressbar := progressbar.DefaultBytes(
 		GetLocalFileInfo(src).Size(),
@@ -221,4 +221,17 @@ func CheckServerName(serverName string) error {
 	}
 
 	return nil
+}
+
+func IsLocalFileExist(dst_path string) bool {
+	_, err := os.Stat(dst_path)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func LocalFileIsDir(dst_path string) bool {
+	file_info := GetLocalFileInfo(dst_path)
+	return file_info.IsDir()
 }

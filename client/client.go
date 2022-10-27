@@ -116,7 +116,6 @@ func main() {
 			fmt.Println(dir)
 		} else {
 			// Extract server name and path
-			// server_name, _ := ExtractServerNameAndFilePath(*pwd_server_name)
 			var server_name string = *pwd_server_name
 			if strings.HasSuffix(server_name, ":") {
 				server_name = (*pwd_server_name)[:len(*pwd_server_name)-1]
@@ -173,7 +172,7 @@ func GetFileInfo(file_path string) (*FileInfo, error) {
 		}
 		res, err := grpcClient.GetFileInfo(context.Background(), &req)
 		if err != nil {
-			log.Fatalf("Call Route err: %v", err)
+			// log.Panicf("Call Route err: %v", err)
 			return nil, err
 		}
 		// log.Println(res)
@@ -254,82 +253,341 @@ func GetDirFileInfoList(dir_path string) (fileInfoList []*FileInfo) {
 }
 
 // copy file
-func CopyFile(src string, dst string) (success bool) {
+func CopyFile(src string, dst string) (err error) {
 	// get server info
 	src_server_name, src_path := ExtractServerNameAndFilePath(src)
 	dst_server_name, dst_path := ExtractServerNameAndFilePath(dst)
+
 	// get server
 	src_server := GetServer(InitDB(), src_server_name)
 	dst_server := GetServer(InitDB(), dst_server_name)
 
+	// final path to use
+	var src_path_final, dst_path_final string
+
+	if src_server_name == "localhost" && dst_server_name == "localhost" { // local to local
+		// judge if src file exist
+		if !IsLocalFileExist(src_path) {
+			fmt.Println("src file not exist")
+			return errors.New("File NOT Found: " + src_path)
+		}
+		src_path_final = src_path
+		// judge if dst file exist
+		if IsLocalFileExist(dst_path) {
+			// if file is dir, append file name
+			if LocalFileIsDir(dst_path) {
+				dst_path_final = filepath.Join(dst_path, filepath.Base(src_path))
+				// Judge if final dst path is exists, if exists, return err
+				if IsLocalFileExist(dst_path_final) {
+					fmt.Println("dst file exist")
+					return errors.New("File Exist: " + dst_path_final)
+				}
+			} else {
+				fmt.Println("dst file exist")
+				return errors.New("File Exist: " + dst_path)
+			}
+		} else { // file not exist, use dst_path directly
+			dst_path_final = dst_path
+		}
+	} else if src_server_name == "localhost" && dst_server_name != "localhost" { // local to remote
+		// judge if src file exist
+		if !IsLocalFileExist(src_path) {
+			fmt.Println("src file not exist")
+			return errors.New("File NOT Found: " + src_path)
+		}
+		src_path_final = src_path
+		// convert dst_path to dst_path_abs
+		var dst_path_abs string
+		if !filepath.IsAbs(dst_path) {
+			dst_path_abs = filepath.Join(dst_server.Pwd, dst_path)
+		} else {
+			dst_path_abs = dst_path
+		}
+		fmt.Println("dst_path_abs", dst_path_abs)
+		// judge if dst file exist
+		if IsRemoteFileExist(&dst_server, dst_path_abs) {
+			// if file is dir, append file name
+			if RemoteFileIsDir(&dst_server, dst_path_abs) {
+				dst_path_final = filepath.Join(dst_path_abs, filepath.Base(src_path))
+				fmt.Println("dst_path_final1", dst_path_final)
+			} else {
+				fmt.Println("dst file exist")
+				return errors.New("File Exist: " + dst_path_abs)
+			}
+		} else {
+			dst_path_final = dst_path_abs
+		}
+	} else if src_server_name != "localhost" && dst_server_name == "localhost" { // remote to remote or remote to local
+		// convert src_path to src_path_abs
+		var src_path_abs string
+		if !filepath.IsAbs(src_path) {
+			src_path_abs = filepath.Join(src_server.Pwd, src_path)
+		} else {
+			src_path_abs = src_path
+		}
+		src_path_final = src_path_abs
+		fmt.Println("src_path_final", src_path_final)
+		// judge if remote src file exist
+		if !IsRemoteFileExist(&src_server, src_path_abs) {
+			fmt.Println("src file not exist")
+			return errors.New("File NOT Found: " + src_path_abs)
+		} else { // src exists, judge dst
+			// judge local dst file exists
+			if IsLocalFileExist(dst_path) {
+				// if file is dir, append file name
+				if LocalFileIsDir(dst_path) {
+					dst_path_final = filepath.Join(dst_path, filepath.Base(src_path))
+					// Judge if final dst path is exists, if exists, return err
+					if IsLocalFileExist(dst_path_final) {
+						fmt.Println("dst file exist1")
+						return errors.New("File Exist: " + dst_path_final)
+					}
+				} else { // file exists and NOT dir
+					fmt.Println("dst file exist2")
+					return errors.New("File Exist: " + dst_path)
+				}
+			} else { // file not exist, use dst_path directly
+				dst_path_final = dst_path
+			}
+		}
+	} else { // remote to remote
+		// convert src_path to src_path_abs
+		var src_path_abs, dst_path_abs string
+		if !filepath.IsAbs(src_path) {
+			src_path_abs = filepath.Join(src_server.Pwd, src_path)
+		} else {
+			src_path_abs = src_path
+		}
+		// convert dst_path to dst_path_abs
+		if !filepath.IsAbs(dst_path) {
+			dst_path_abs = filepath.Join(dst_server.Pwd, dst_path)
+		} else {
+			dst_path_abs = dst_path
+		}
+		src_path_final = src_path_abs
+		dst_path_final = dst_path_abs
+		// judge if remote src file exist
+		if !IsRemoteFileExist(&src_server, src_path_abs) {
+			fmt.Println("src file not exist")
+			return errors.New("File NOT Found: " + src_path_abs)
+		} else { // src exists, judge dst
+			// judge remote dst file exists
+			if IsRemoteFileExist(&dst_server, dst_path_abs) {
+				// if file is dir, append file name
+				if RemoteFileIsDir(&dst_server, dst_path_abs) {
+					dst_path_final = filepath.Join(dst_path_abs, filepath.Base(src_path))
+					// Judge if final dst path is exists, if exists, return err
+					if IsRemoteFileExist(&dst_server, dst_path_final) {
+						fmt.Println("dst file exist1")
+						return errors.New("File Exist: " + dst_path_final)
+					}
+				} else { // file exists and NOT dir
+					fmt.Println("dst file exist2")
+					return errors.New("File Exist: " + dst_path_abs)
+				}
+			} else {
+				dst_path_final = dst_path_abs
+			}
+		}
+	}
+
 	// 同一主机
-	if src_server.Addr == src_server.Addr {
+	if src_server.Addr == dst_server.Addr {
 		// 本地复制
 		if src_server.Addr == "localhost" {
 			// copy local file
-			CopyLocalFile(src_path, dst_path)
-			return true
+			CopyLocalFile(src_path_final, dst_path_final)
+			return nil
 		} else {
 			// copy remote file
-			CopyRemoteFile(src_server, src_path, dst_path)
-			return true
+			CopyRemoteFile(src_server, src_path_final, dst_path_final)
+			return nil
 		}
 	} else if src_server.Addr == "localhost" || dst_server.Addr == "localhost" { // 一个本地一个远程
 		if src_server.Addr == "localhost" {
 			// upload local file to remote
-			UploadFile(dst_server, src_path, dst_path)
-			return true
+			UploadFile(dst_server, src_path_final, dst_path_final)
+			return nil
 		} else {
 			// download remote file to local
-			DownloadFile(src_server, src_path, dst_path)
-			return true
+			DownloadFile(src_server, dst_path_final, src_path_final)
+			return nil
 		}
 	} else { // 两个远程
-		TransmitFile(src_server, dst_server, src_path, dst_path)
+		TransmitFile(src_server, dst_server, src_path_final, dst_path_final)
 	}
-	return false
+	return err
 }
 
 // move file
-func MoveFile(src string, dst string) (success bool) {
+func MoveFile(src string, dst string) (err error) {
 	// get server info
 	src_server_name, src_path := ExtractServerNameAndFilePath(src)
 	dst_server_name, dst_path := ExtractServerNameAndFilePath(dst)
 	// get server
 	src_server := GetServer(InitDB(), src_server_name)
 	dst_server := GetServer(InitDB(), dst_server_name)
+
+	// final path to use
+	var src_path_final, dst_path_final string
+
+	if src_server_name == "localhost" && dst_server_name == "localhost" { // local to local
+		// judge if src file exist
+		if !IsLocalFileExist(src_path) {
+			fmt.Println("src file not exist")
+			return errors.New("File NOT Found: " + src_path)
+		}
+		src_path_final = src_path
+		// judge if dst file exist
+		if IsLocalFileExist(dst_path) {
+			// if file is dir, append file name
+			if LocalFileIsDir(dst_path) {
+				dst_path_final = filepath.Join(dst_path, filepath.Base(src_path))
+				// Judge if final dst path is exists, if exists, return err
+				if IsLocalFileExist(dst_path_final) {
+					fmt.Println("dst file exist")
+					return errors.New("File Exist: " + dst_path_final)
+				}
+			} else {
+				fmt.Println("dst file exist")
+				return errors.New("File Exist: " + dst_path)
+			}
+		} else { // file not exist, use dst_path directly
+			dst_path_final = dst_path
+		}
+	} else if src_server_name == "localhost" && dst_server_name != "localhost" { // local to remote
+		// judge if src file exist
+		if !IsLocalFileExist(src_path) {
+			fmt.Println("src file not exist")
+			return errors.New("File NOT Found: " + src_path)
+		}
+		src_path_final = src_path
+		// convert dst_path to dst_path_abs
+		var dst_path_abs string
+		if !filepath.IsAbs(dst_path) {
+			dst_path_abs = filepath.Join(dst_server.Pwd, dst_path)
+		} else {
+			dst_path_abs = dst_path
+		}
+		fmt.Println("dst_path_abs", dst_path_abs)
+		// judge if dst file exist
+		if IsRemoteFileExist(&dst_server, dst_path_abs) {
+			// if file is dir, append file name
+			if RemoteFileIsDir(&dst_server, dst_path_abs) {
+				dst_path_final = filepath.Join(dst_path_abs, filepath.Base(src_path))
+				fmt.Println("dst_path_final1", dst_path_final)
+			} else {
+				fmt.Println("dst file exist")
+				return errors.New("File Exist: " + dst_path_abs)
+			}
+		} else {
+			dst_path_final = dst_path_abs
+		}
+	} else if src_server_name != "localhost" && dst_server_name == "localhost" { // remote to remote or remote to local
+		// convert src_path to src_path_abs
+		var src_path_abs string
+		if !filepath.IsAbs(src_path) {
+			src_path_abs = filepath.Join(src_server.Pwd, src_path)
+		} else {
+			src_path_abs = src_path
+		}
+		src_path_final = src_path_abs
+		fmt.Println("src_path_final", src_path_final)
+		// judge if remote src file exist
+		if !IsRemoteFileExist(&src_server, src_path_abs) {
+			fmt.Println("src file not exist")
+			return errors.New("File NOT Found: " + src_path_abs)
+		} else { // src exists, judge dst
+			// judge local dst file exists
+			if IsLocalFileExist(dst_path) {
+				// if file is dir, append file name
+				if LocalFileIsDir(dst_path) {
+					dst_path_final = filepath.Join(dst_path, filepath.Base(src_path))
+					// Judge if final dst path is exists, if exists, return err
+					if IsLocalFileExist(dst_path_final) {
+						fmt.Println("dst file exist1")
+						return errors.New("File Exist: " + dst_path_final)
+					}
+				} else { // file exists and NOT dir
+					fmt.Println("dst file exist2")
+					return errors.New("File Exist: " + dst_path)
+				}
+			} else { // file not exist, use dst_path directly
+				dst_path_final = dst_path
+			}
+		}
+	} else { // remote to remote
+		// convert src_path to src_path_abs
+		var src_path_abs, dst_path_abs string
+		if !filepath.IsAbs(src_path) {
+			src_path_abs = filepath.Join(src_server.Pwd, src_path)
+		} else {
+			src_path_abs = src_path
+		}
+		// convert dst_path to dst_path_abs
+		if !filepath.IsAbs(dst_path) {
+			dst_path_abs = filepath.Join(dst_server.Pwd, dst_path)
+		} else {
+			dst_path_abs = dst_path
+		}
+		src_path_final = src_path_abs
+		dst_path_final = dst_path_abs
+		// judge if remote src file exist
+		if !IsRemoteFileExist(&src_server, src_path_abs) {
+			fmt.Println("src file not exist")
+			return errors.New("File NOT Found: " + src_path_abs)
+		} else { // src exists, judge dst
+			// judge remote dst file exists
+			if IsRemoteFileExist(&dst_server, dst_path_abs) {
+				// if file is dir, append file name
+				if RemoteFileIsDir(&dst_server, dst_path_abs) {
+					dst_path_final = filepath.Join(dst_path_abs, filepath.Base(src_path))
+					// Judge if final dst path is exists, if exists, return err
+					if IsRemoteFileExist(&dst_server, dst_path_final) {
+						fmt.Println("dst file exist1")
+						return errors.New("File Exist: " + dst_path_final)
+					}
+				} else { // file exists and NOT dir
+					fmt.Println("dst file exist2")
+					return errors.New("File Exist: " + dst_path_abs)
+				}
+			} else {
+				dst_path_final = dst_path_abs
+			}
+		}
+	}
 
 	// 同一主机
 	if src_server.Addr == src_server.Addr {
 		// 本地复制
 		if src_server.Addr == "localhost" {
 			// move local file
-			MoveLocalFile(src_path, dst_path)
-			return true
+			MoveLocalFile(src_path_final, dst_path_final)
+			return nil
 		} else {
 			// move remote file
-			MoveRemoteFile(src_server, src_path, dst_path)
-			return true
+			MoveRemoteFile(src_server, src_path_final, dst_path_final)
+			return nil
 		}
 	} else if src_server.Addr == "localhost" || dst_server.Addr == "localhost" { // 一个本地一个远程
 		if src_server.Addr == "localhost" {
 			// upload local file to remote
-			UploadFile(dst_server, src_path, dst_path)
+			UploadFile(dst_server, src_path_final, dst_path_final)
 			// delete local file
-			DeleteLocalFile(src_path)
-			return true
+			DeleteLocalFile(src_path_final)
+			return nil
 		} else {
 			// download remote file to local
-			DownloadFile(src_server, src_path, dst_path)
+			DownloadFile(src_server, src_path_final, dst_path_final)
 			// delete remote file
-			DeleteRemoteFile(dst_server, dst_path)
-			return true
+			DeleteRemoteFile(dst_server, dst_path_final)
+			return nil
 		}
 	} else { // 两个远程
 		log.Println("Files will not be deleted for security reasons.")
-		TransmitFile(src_server, dst_server, src_path, dst_path)
+		TransmitFile(src_server, dst_server, src_path_final, dst_path_final)
 	}
-	return false
+	return err
 }
 
 // delete file
@@ -389,4 +647,23 @@ func ChangeDir(server_path string) error {
 	// change dir
 	ModifyServerPwd(InitDB(), server_name, absPath)
 	return nil
+}
+
+func IsRemoteFileExist(remote *ServerInfo, path_abs string) bool {
+	_, err := GetFileInfo(remote.Name + ":" + path_abs)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func RemoteFileIsDir(remote *ServerInfo, path_abs string) bool {
+	file_info, err := GetFileInfo(remote.Name + ":" + path_abs)
+	if err != nil {
+		return false
+	}
+	if file_info.IsDir {
+		return true
+	}
+	return false
 }

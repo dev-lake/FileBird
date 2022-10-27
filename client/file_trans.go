@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -12,7 +13,7 @@ import (
 )
 
 func UploadFile(remote ServerInfo, local_path string, remote_path string) {
-	log.Println("trace UploadFile")
+	log.Println("trace UploadFile", local_path, "to", remote_path)
 	// Connect to server
 	conn := GenGRPCConn(remote.Addr, int(remote.Port))
 	defer conn.Close()
@@ -74,6 +75,8 @@ func UploadFile(remote ServerInfo, local_path string, remote_path string) {
 }
 
 func DownloadFile(remote ServerInfo, local_path string, remote_path string) {
+	fmt.Println("trace DownloadFile", remote_path, "to", local_path)
+	fmt.Println(remote.Addr, remote.Port)
 	// Connect to server
 	conn := GenGRPCConn(remote.Addr, int(remote.Port))
 	defer conn.Close()
