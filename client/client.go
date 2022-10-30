@@ -603,8 +603,15 @@ func DeleteFile(file_path string) (success bool) {
 		DeleteLocalFile(path)
 		return true
 	} else {
+		// convert path to abs_path
+		var abs_path string
+		if !filepath.IsAbs(path) {
+			abs_path = filepath.Join(server.Pwd, path)
+		} else {
+			abs_path = path
+		}
 		// delete remote file
-		DeleteRemoteFile(server, path)
+		DeleteRemoteFile(server, abs_path)
 		return true
 	}
 }

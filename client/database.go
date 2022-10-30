@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"path/filepath"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -25,8 +27,13 @@ var (
 )
 
 func InitDB() *gorm.DB {
+	exe_path, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	exe_dir := filepath.Dir(exe_path)
 	os.MkdirAll("data", 0755)
-	db, err := gorm.Open(sqlite.Open(db_path), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(filepath.Join(exe_dir, db_path)), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
@@ -98,7 +105,7 @@ func GetServer(db *gorm.DB, name string) ServerInfo {
 	}
 	db.First(&server, "name = ?", name)
 	if condition := db.Error; condition != nil {
-		panic("failed to get server")
+		log.Fatalln("failed to get server")
 	}
 	return server
 }
