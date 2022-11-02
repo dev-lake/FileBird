@@ -12,6 +12,7 @@
 - Move local/remote file
 - Del local/remote file
 - list local/remote file
+- make local/remote dir
 
 ### TODO
 - ~~Show Progress bar~~ (complete)
