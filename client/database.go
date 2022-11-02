@@ -57,9 +57,34 @@ func AddServer(db *gorm.DB, server_name string, addr string, port int) error {
 		return err
 	}
 	server := ServerInfo{Name: server_name, Addr: addr, Port: port}
+	// check grpc server status
+	server_online := CheckGRPCServerStatus(addr, port)
+	fmt.Println(server_online)
+	if !server_online {
+		fmt.Print("Server is offline, Continue Add Server? (y/n): ")
+		var input string
+		fmt.Scanln(&input)
+		if input != "y" {
+			fmt.Println("Add Server Cancelled")
+			return fmt.Errorf("server is offline, add server cancled")
+		} else {
+			db.Create(
+				&ServerInfo{
+					Name: server_name,
+					Addr: addr,
+					Port: port,
+					// User: user_info.Username,
+					// Home: user_info.HomeDir,
+					// Pwd:  user_info.HomeDir,
+				},
+			)
+			fmt.Println("Server Added, Please complete the user information manually.")
+			return nil
+		}
+	}
 	user_info, err := GetRemoteUserInfo(server)
 	if err != nil {
-		fmt.Println("User Check Failed, Continue Add Server? (y/n): ")
+		fmt.Print("User Check Failed, Continue Add Server? (y/n): ")
 		var input string
 		fmt.Scanln(&input)
 		if input == "y" {

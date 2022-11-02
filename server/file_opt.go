@@ -42,3 +42,14 @@ func (s *FileOperateService) DeleteFile(ctx context.Context, req *pb.DeleteFileR
 		Success: true,
 	}, nil
 }
+
+// mkdir
+func (s *FileOperateService) MakeDir(ctx context.Context, req *pb.MakeDirReq) (*pb.FileOptRep, error) {
+	log.Println("MakeDir")
+	if !MakeLocalDir(req.Path) {
+		return nil, status.Error(codes.Unknown, "make dir failed")
+	}
+	return &pb.FileOptRep{
+		Success: true,
+	}, nil
+}

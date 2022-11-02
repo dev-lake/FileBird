@@ -26,6 +26,7 @@ type FileOperateClient interface {
 	MoveFile(ctx context.Context, in *MoveFileReq, opts ...grpc.CallOption) (*FileOptRep, error)
 	DeleteFile(ctx context.Context, in *DeleteFileReq, opts ...grpc.CallOption) (*FileOptRep, error)
 	RenameFile(ctx context.Context, in *RenameFileReq, opts ...grpc.CallOption) (*FileOptRep, error)
+	MakeDir(ctx context.Context, in *MakeDirReq, opts ...grpc.CallOption) (*FileOptRep, error)
 }
 
 type fileOperateClient struct {
@@ -72,6 +73,15 @@ func (c *fileOperateClient) RenameFile(ctx context.Context, in *RenameFileReq, o
 	return out, nil
 }
 
+func (c *fileOperateClient) MakeDir(ctx context.Context, in *MakeDirReq, opts ...grpc.CallOption) (*FileOptRep, error) {
+	out := new(FileOptRep)
+	err := c.cc.Invoke(ctx, "/FileOperate/MakeDir", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FileOperateServer is the server API for FileOperate service.
 // All implementations must embed UnimplementedFileOperateServer
 // for forward compatibility
@@ -80,6 +90,7 @@ type FileOperateServer interface {
 	MoveFile(context.Context, *MoveFileReq) (*FileOptRep, error)
 	DeleteFile(context.Context, *DeleteFileReq) (*FileOptRep, error)
 	RenameFile(context.Context, *RenameFileReq) (*FileOptRep, error)
+	MakeDir(context.Context, *MakeDirReq) (*FileOptRep, error)
 	mustEmbedUnimplementedFileOperateServer()
 }
 
@@ -98,6 +109,9 @@ func (UnimplementedFileOperateServer) DeleteFile(context.Context, *DeleteFileReq
 }
 func (UnimplementedFileOperateServer) RenameFile(context.Context, *RenameFileReq) (*FileOptRep, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RenameFile not implemented")
+}
+func (UnimplementedFileOperateServer) MakeDir(context.Context, *MakeDirReq) (*FileOptRep, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MakeDir not implemented")
 }
 func (UnimplementedFileOperateServer) mustEmbedUnimplementedFileOperateServer() {}
 
@@ -184,6 +198,24 @@ func _FileOperate_RenameFile_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FileOperate_MakeDir_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MakeDirReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileOperateServer).MakeDir(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/FileOperate/MakeDir",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileOperateServer).MakeDir(ctx, req.(*MakeDirReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FileOperate_ServiceDesc is the grpc.ServiceDesc for FileOperate service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -206,6 +238,10 @@ var FileOperate_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RenameFile",
 			Handler:    _FileOperate_RenameFile_Handler,
+		},
+		{
+			MethodName: "MakeDir",
+			Handler:    _FileOperate_MakeDir_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -64,6 +64,9 @@ var (
 	// cd dir
 	cd             = app.Command("cd", "Change current dir")
 	cd_server_path = cd.Arg("path", "Server and Path").Required().String() // format: server_name:path
+	// mkdir
+	mkdir      = app.Command("mkdir", "Create dir")
+	mkdir_path = mkdir.Arg("path", "Server and Path").Required().String() // format: server_name:path
 	// copy file
 	cp          = app.Command("cp", "Copy file")
 	cp_src_file = cp.Arg("src_file", "Source file path").Required().String()
@@ -124,6 +127,9 @@ func main() {
 		}
 	case cd.FullCommand():
 		ChangeDir(*cd_server_path)
+	case mkdir.FullCommand():
+		// mkdir
+		MakeDir(*mkdir_path)
 	case cp.FullCommand():
 		println(*cp_src_file, *cp_dst_file)
 		CopyFile(*cp_src_file, *cp_dst_file)
@@ -673,4 +679,31 @@ func RemoteFileIsDir(remote *ServerInfo, path_abs string) bool {
 		return true
 	}
 	return false
+}
+
+// mkdir
+func MakeDir(server_path string) error {
+	// get server info
+	server_name, path := ExtractServerNameAndFilePath(server_path)
+	// get server
+	server := GetServer(InitDB(), server_name)
+
+	// 本地创建
+	if server.Addr == "localhost" {
+		// create local dir
+		MakeLocalDir(path)
+		return nil
+	} else {
+		// convert path to abs_path
+		var abs_path string
+		if !filepath.IsAbs(path) {
+			abs_path = filepath.Join(server.Pwd, path)
+		} else {
+			abs_path = path
+		}
+		// make remote dir
+		MakeRemoteDir(server, abs_path)
+
+		return nil
+	}
 }

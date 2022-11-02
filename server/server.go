@@ -28,6 +28,7 @@ func main() {
 	pb.RegisterFileOperateServer(server, &FileOperateService{})
 	pb.RegisterFileTransServer(server, &FileTransService{})
 	pb.RegisterUserServer(server, &UserService{})
+	pb.RegisterUtilsServer(server, &UtilsService{})
 
 	// Start listen
 	fmt.Println("net listening", Addr, "...")

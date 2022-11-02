@@ -70,3 +70,24 @@ func DeleteRemoteFile(remote ServerInfo, path string) {
 	log.Println(rep)
 
 }
+
+// make remote directory
+func MakeRemoteDir(remote ServerInfo, path string) {
+	// Connect server
+	conn := GenGRPCConn(remote.Addr, int(remote.Port))
+	defer conn.Close()
+
+	// Establish gRPC connection
+	grpcClient := pb.NewFileOperateClient(conn)
+
+	// call gRPC method
+	req := pb.MakeDirReq{
+		Path: path,
+	}
+	rep, err := grpcClient.MakeDir(context.Background(), &req)
+	if err != nil {
+		log.Fatalf("Call Route err: %v", err)
+	}
+	log.Println(rep)
+
+}

@@ -96,7 +96,7 @@ func CopyFile(src string, dst string) bool {
 
 // Delete file
 func DeleteFile(path string) bool {
-	err := os.Remove(path)
+	err := os.RemoveAll(path)
 	if err != nil {
 		log.Panic(err)
 		return false
@@ -128,4 +128,14 @@ func GetLinuxCurrentUser() (*user.User, error) {
 		log.Panic(err)
 	}
 	return user, nil
+}
+
+// make dir
+func MakeLocalDir(path string) bool {
+	err := os.MkdirAll(path, 0755)
+	if err != nil {
+		log.Panic(err)
+		return false
+	}
+	return true
 }

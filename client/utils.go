@@ -187,7 +187,7 @@ func CopyLocalFile(src string, dst string) bool {
 
 // Delete file
 func DeleteLocalFile(path string) bool {
-	err := os.Remove(path)
+	err := os.RemoveAll(path)
 	if err != nil {
 		log.Panic(err)
 		return false
@@ -234,4 +234,14 @@ func IsLocalFileExist(dst_path string) bool {
 func LocalFileIsDir(dst_path string) bool {
 	file_info := GetLocalFileInfo(dst_path)
 	return file_info.IsDir()
+}
+
+// make dir
+func MakeLocalDir(path string) bool {
+	err := os.MkdirAll(path, 0755)
+	if err != nil {
+		log.Panic(err)
+		return false
+	}
+	return true
 }
