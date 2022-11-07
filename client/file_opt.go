@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	pb "lake.dev/filebird/client/grpc"
@@ -73,6 +74,7 @@ func DeleteRemoteFile(remote ServerInfo, path string) {
 
 // make remote directory
 func MakeRemoteDir(remote ServerInfo, path string) {
+	fmt.Println("trace make remote dir", path)
 	// Connect server
 	conn := GenGRPCConn(remote.Addr, int(remote.Port))
 	defer conn.Close()
@@ -89,5 +91,4 @@ func MakeRemoteDir(remote ServerInfo, path string) {
 		log.Fatalf("Call Route err: %v", err)
 	}
 	log.Println(rep)
-
 }

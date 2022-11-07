@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+// option go_package = "../server/grpc";
+option go_package = "../client/grpc";
+
+service Utils {
+    rpc Ping (PingReq) returns (PingRep) {}
+}
+
+message PingReq {}
+
+message PingRep {}

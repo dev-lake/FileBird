@@ -15,7 +15,7 @@ type FileOperateService struct {
 
 func (s *FileOperateService) CopyFile(ctx context.Context, req *pb.CopyFileReq) (*pb.FileOptRep, error) {
 	log.Println("CopyFile")
-	if !CopyFile(req.Src, req.Dst) {
+	if !CopyLocalFileRecursively(req.Src, req.Dst) {
 		return nil, status.Error(codes.Unknown, "copy file failed")
 	}
 	return &pb.FileOptRep{

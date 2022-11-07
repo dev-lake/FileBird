@@ -8,6 +8,8 @@ import (
 	"os/user"
 	"strconv"
 	"syscall"
+
+	copylib "github.com/otiai10/copy"
 )
 
 // Get File Info
@@ -133,6 +135,16 @@ func GetLinuxCurrentUser() (*user.User, error) {
 // make dir
 func MakeLocalDir(path string) bool {
 	err := os.MkdirAll(path, 0755)
+	if err != nil {
+		log.Panic(err)
+		return false
+	}
+	return true
+}
+
+// copy file recursively
+func CopyLocalFileRecursively(src string, dst string) bool {
+	err := copylib.Copy(src, dst)
 	if err != nil {
 		log.Panic(err)
 		return false

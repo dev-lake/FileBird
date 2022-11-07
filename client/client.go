@@ -133,7 +133,6 @@ func main() {
 	case cp.FullCommand():
 		println(*cp_src_file, *cp_dst_file)
 		CopyFile(*cp_src_file, *cp_dst_file)
-		// CopyLocalFile(*cp_src_file, *cp_dst_file)
 	case mv.FullCommand():
 		println(*mv_src_file, *mv_dst_file)
 		MoveFile(*mv_src_file, *mv_dst_file)
@@ -402,9 +401,10 @@ func CopyFile(src string, dst string) (err error) {
 		// 本地复制
 		if src_server.Addr == "localhost" {
 			// copy local file
-			CopyLocalFile(src_path_final, dst_path_final)
+			CopyLocalFileRecursively(src_path_final, dst_path_final)
 			return nil
 		} else {
+			fmt.Println("final paht", src_path_final, dst_path_final)
 			// copy remote file
 			CopyRemoteFile(src_server, src_path_final, dst_path_final)
 			return nil
@@ -412,7 +412,8 @@ func CopyFile(src string, dst string) (err error) {
 	} else if src_server.Addr == "localhost" || dst_server.Addr == "localhost" { // 一个本地一个远程
 		if src_server.Addr == "localhost" {
 			// upload local file to remote
-			UploadFile(dst_server, src_path_final, dst_path_final)
+			// UploadFile(dst_server, src_path_final, dst_path_final)
+			UploadDir(dst_server, src_path_final, dst_path_final)
 			return nil
 		} else {
 			// download remote file to local

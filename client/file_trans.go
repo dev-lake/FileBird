@@ -56,11 +56,8 @@ func UploadFile(remote ServerInfo, local_path string, remote_path string) {
 		n, err := file.Read(buf)
 		if err != nil {
 			if err == io.EOF {
-				rep, err := stream.CloseAndRecv()
-				if err != nil {
-					log.Fatalf("close stream err: %v", err)
-				}
-				log.Println(rep.Msg)
+				log.Println("upload file success")
+				break
 			} else {
 				log.Fatalf("read file err: %v", err)
 			}
@@ -68,10 +65,53 @@ func UploadFile(remote ServerInfo, local_path string, remote_path string) {
 		}
 		err = stream.Send(&pb.UploadReq{Data: buf[:n]})
 		if err != nil {
-			log.Fatalf("send file err: %v", err)
+			if err == io.EOF {
+				log.Println("upload file success")
+				break
+			} else {
+				log.Panicln("upload file", file.Name(), "failed, err:", err)
+			}
 		}
 		progress.Add(n) // show progress
 	}
+}
+
+// upload file recursively
+func UploadDir(remote ServerInfo, local_path string, remote_path string) error {
+	log.Println("trace UploadDir", local_path, "to", remote_path)
+	// judge file exist
+	if !IsLocalFileExist(local_path) {
+		log.Panic("file not exist")
+		return fmt.Errorf("file not exist")
+	}
+	// judge file is dir
+	if !LocalFileIsDir(local_path) {
+		UploadFile(remote, local_path, remote_path)
+	} else {
+		// get local dir files
+		files := ReadLocalDirAll(local_path)
+		for _, file := range files {
+			fmt.Println("---", file.Path)
+		}
+		// upload files
+		for _, file := range files {
+			if file.Name == ".DS_Store" { // skip .DS_Store. macos system file
+				continue
+			}
+			// get remote path
+			relative_path := file.Path[len(local_path):]
+			remote_file_path := remote_path + relative_path
+			if file.IsDir {
+				fmt.Println("mkdir", file.Name)
+				MakeRemoteDir(remote, remote_file_path)
+			} else {
+				fmt.Println("upload", file.Name)
+				UploadFile(remote, file.Path, remote_file_path)
+			}
+			// UploadDir(remote, local_path+"/"+file.Name(), remote_path+"/"+file.Name())
+		}
+	}
+	return nil
 }
 
 func DownloadFile(remote ServerInfo, local_path string, remote_path string) {

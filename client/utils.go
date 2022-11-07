@@ -8,11 +8,13 @@ import (
 	"log"
 	"os"
 	"os/user"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
 
 	"github.com/jedib0t/go-pretty/v6/table"
+	copylib "github.com/otiai10/copy"
 	"github.com/schollz/progressbar/v3"
 )
 
@@ -127,6 +129,42 @@ func ReadLocalDir(path string) []fs.FileInfo {
 	return fileInfoList
 }
 
+// read dir all files recursively
+// TODO: convert []fs.DirEntry to FileInfo struct
+func ReadLocalDirAll(path string) []FileInfo {
+	log.Println("Trace ReadDirAll.", path)
+	var file_list []FileInfo
+	fileInfoList, err := os.ReadDir(path)
+	if err != nil {
+		log.Panic(err)
+	}
+	// convert []fs.DirEntry to FileInfo struct
+	for _, file := range fileInfoList {
+		if file.Name() == ".DS_Store" {
+			continue
+		}
+		info, _ := file.Info()
+		file_list = append(file_list, FileInfo{
+			Name: file.Name(),
+			Size: info.Size(),
+			// UserName: info.Sys().(*syscall.Stat_t).Uid,
+			// GroupName: file.Sys().(*syscall.Stat_t).Gid,
+			Mode:    info.Mode(),
+			ModTime: info.ModTime().String(),
+			IsDir:   file.IsDir(),
+			Path:    filepath.Join(path, file.Name()),
+		})
+	}
+	// reverse next layer file list
+	for _, fileInfo := range file_list {
+		if fileInfo.IsDir {
+			file_list = append(file_list, ReadLocalDirAll(fileInfo.Path)...)
+		}
+	}
+
+	return file_list
+}
+
 func GetFileUserAndGroupName(fStat fs.FileInfo) (username string, groupname string) {
 	// get file user id and group id
 	uid := fStat.Sys().(*syscall.Stat_t).Uid
@@ -178,6 +216,16 @@ func CopyLocalFile(src string, dst string) bool {
 	defer dstFile.Close()
 
 	_, err = io.Copy(io.MultiWriter(dstFile, progressbar), srcFile)
+	if err != nil {
+		log.Panic(err)
+		return false
+	}
+	return true
+}
+
+// copy file recursively
+func CopyLocalFileRecursively(src string, dst string) bool {
+	err := copylib.Copy(src, dst)
 	if err != nil {
 		log.Panic(err)
 		return false
