@@ -20,15 +20,15 @@
 - ~~在数据库添加pwd字段，实现 `pwd/cd/ls` 命令和相对目录的传输~~(complete)
 - ~~限制 server 名称，不能有 local/localhost/: 等保留字段~~(complete)
 - 增加身份验证
-- 在添加服务器时验证可用性、用户可用性验证
+- ~~在添加服务器时验证可用性、用户可用性验证~~
 - Server 端增加配置文件，配置监听地址、用户权限等
 - Server 端做成服务
 - Hash Check
-- Transmission rate limit
 - 本地、远程外链下载（http, https）
 
 ### PRO Version TODO
 - Transfer file directly from remote to remote 
+- Transmission rate limit
 - Encryption communication
 - User Rights Management
 - File Detail (Create time, Mod time, last open， Hash time and so on.)
