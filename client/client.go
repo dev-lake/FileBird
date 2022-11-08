@@ -417,7 +417,8 @@ func CopyFile(src string, dst string) (err error) {
 			return nil
 		} else {
 			// download remote file to local
-			DownloadFile(src_server, dst_path_final, src_path_final)
+			// DownloadFile(src_server, dst_path_final, src_path_final)
+			DownloadDir(src_server, dst_path_final, src_path_final)
 			return nil
 		}
 	} else { // 两个远程
@@ -579,13 +580,15 @@ func MoveFile(src string, dst string) (err error) {
 	} else if src_server.Addr == "localhost" || dst_server.Addr == "localhost" { // 一个本地一个远程
 		if src_server.Addr == "localhost" {
 			// upload local file to remote
-			UploadFile(dst_server, src_path_final, dst_path_final)
+			// UploadFile(dst_server, src_path_final, dst_path_final)
+			UploadDir(dst_server, src_path_final, dst_path_final)
 			// delete local file
 			DeleteLocalFile(src_path_final)
 			return nil
 		} else {
 			// download remote file to local
-			DownloadFile(src_server, src_path_final, dst_path_final)
+			// DownloadFile(src_server, src_path_final, dst_path_final)
+			DownloadDir(src_server, src_path_final, dst_path_final)
 			// delete remote file
 			DeleteRemoteFile(dst_server, dst_path_final)
 			return nil
@@ -661,25 +664,6 @@ func ChangeDir(server_path string) error {
 	// change dir
 	ModifyServerPwd(InitDB(), server_name, absPath)
 	return nil
-}
-
-func IsRemoteFileExist(remote *ServerInfo, path_abs string) bool {
-	_, err := GetFileInfo(remote.Name + ":" + path_abs)
-	if err != nil {
-		return false
-	}
-	return true
-}
-
-func RemoteFileIsDir(remote *ServerInfo, path_abs string) bool {
-	file_info, err := GetFileInfo(remote.Name + ":" + path_abs)
-	if err != nil {
-		return false
-	}
-	if file_info.IsDir {
-		return true
-	}
-	return false
 }
 
 // mkdir

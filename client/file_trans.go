@@ -171,6 +171,33 @@ func DownloadFile(remote ServerInfo, local_path string, remote_path string) {
 	}
 }
 
+func DownloadDir(remote ServerInfo, local_path string, remote_path string) error {
+	log.Println("trace DownloadDir", remote_path, "to", local_path)
+	// get remote dir all files
+	files, err := GetRemoteDirAllFiles(&remote, remote_path)
+	if err != nil {
+		return err
+	}
+	// download files
+	for _, file := range files {
+		// get local path
+		relative_path := file.Path[len(remote_path):]
+		local_file_path := local_path + relative_path
+		if file.IsDir {
+			fmt.Println("mkdir", file.Name)
+			ok := MakeLocalDir(local_file_path)
+			if !ok {
+				return fmt.Errorf("mkdir %s failed", local_file_path)
+			}
+		} else {
+			fmt.Println("download", file.Name)
+			DownloadFile(remote, local_file_path, file.Path)
+		}
+		// DownloadDir(remote, local_path+"/"+file.Name(), remote_path+"/"+file.Name())
+	}
+	return nil
+}
+
 // transmit file from remote to remote
 func TransmitFile(src ServerInfo, dst ServerInfo, src_path string, dst_path string) {
 	log.Println("trace transmit file from", src.Addr, "to", dst.Addr)

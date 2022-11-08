@@ -16,7 +16,7 @@
 
 ### TODO
 - ~~Show Progress bar~~ (complete)
-- 实现文件夹的递归传输
+- ~~实现文件夹的递归传输~~ (complete)
 - ~~在数据库添加pwd字段，实现 `pwd/cd/ls` 命令和相对目录的传输~~(complete)
 - ~~限制 server 名称，不能有 local/localhost/: 等保留字段~~(complete)
 - 增加身份验证

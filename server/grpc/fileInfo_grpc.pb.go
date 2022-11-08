@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type FileInfoClient interface {
 	GetFileInfo(ctx context.Context, in *FileReq, opts ...grpc.CallOption) (*RegularFileInfo, error)
 	GetDirFileInfo(ctx context.Context, in *FileReq, opts ...grpc.CallOption) (*DirFileInfoList, error)
+	GetDirAllFiles(ctx context.Context, in *FileReq, opts ...grpc.CallOption) (*DirFileInfoList, error)
 	IsFileExist(ctx context.Context, in *FileReq, opts ...grpc.CallOption) (*FileExistRep, error)
 	FileIsDir(ctx context.Context, in *FileReq, opts ...grpc.CallOption) (*FileIsDirRep, error)
 }
@@ -54,6 +55,15 @@ func (c *fileInfoClient) GetDirFileInfo(ctx context.Context, in *FileReq, opts .
 	return out, nil
 }
 
+func (c *fileInfoClient) GetDirAllFiles(ctx context.Context, in *FileReq, opts ...grpc.CallOption) (*DirFileInfoList, error) {
+	out := new(DirFileInfoList)
+	err := c.cc.Invoke(ctx, "/FileInfo/GetDirAllFiles", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *fileInfoClient) IsFileExist(ctx context.Context, in *FileReq, opts ...grpc.CallOption) (*FileExistRep, error) {
 	out := new(FileExistRep)
 	err := c.cc.Invoke(ctx, "/FileInfo/IsFileExist", in, out, opts...)
@@ -78,6 +88,7 @@ func (c *fileInfoClient) FileIsDir(ctx context.Context, in *FileReq, opts ...grp
 type FileInfoServer interface {
 	GetFileInfo(context.Context, *FileReq) (*RegularFileInfo, error)
 	GetDirFileInfo(context.Context, *FileReq) (*DirFileInfoList, error)
+	GetDirAllFiles(context.Context, *FileReq) (*DirFileInfoList, error)
 	IsFileExist(context.Context, *FileReq) (*FileExistRep, error)
 	FileIsDir(context.Context, *FileReq) (*FileIsDirRep, error)
 	mustEmbedUnimplementedFileInfoServer()
@@ -92,6 +103,9 @@ func (UnimplementedFileInfoServer) GetFileInfo(context.Context, *FileReq) (*Regu
 }
 func (UnimplementedFileInfoServer) GetDirFileInfo(context.Context, *FileReq) (*DirFileInfoList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDirFileInfo not implemented")
+}
+func (UnimplementedFileInfoServer) GetDirAllFiles(context.Context, *FileReq) (*DirFileInfoList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDirAllFiles not implemented")
 }
 func (UnimplementedFileInfoServer) IsFileExist(context.Context, *FileReq) (*FileExistRep, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsFileExist not implemented")
@@ -148,6 +162,24 @@ func _FileInfo_GetDirFileInfo_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FileInfo_GetDirAllFiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FileReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileInfoServer).GetDirAllFiles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/FileInfo/GetDirAllFiles",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileInfoServer).GetDirAllFiles(ctx, req.(*FileReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _FileInfo_IsFileExist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(FileReq)
 	if err := dec(in); err != nil {
@@ -198,6 +230,10 @@ var FileInfo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDirFileInfo",
 			Handler:    _FileInfo_GetDirFileInfo_Handler,
+		},
+		{
+			MethodName: "GetDirAllFiles",
+			Handler:    _FileInfo_GetDirAllFiles_Handler,
 		},
 		{
 			MethodName: "IsFileExist",

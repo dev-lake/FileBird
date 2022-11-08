@@ -130,7 +130,6 @@ func ReadLocalDir(path string) []fs.FileInfo {
 }
 
 // read dir all files recursively
-// TODO: convert []fs.DirEntry to FileInfo struct
 func ReadLocalDirAll(path string) []FileInfo {
 	log.Println("Trace ReadDirAll.", path)
 	var file_list []FileInfo

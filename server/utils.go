@@ -6,11 +6,24 @@ import (
 	"log"
 	"os"
 	"os/user"
+	"path/filepath"
 	"strconv"
 	"syscall"
 
 	copylib "github.com/otiai10/copy"
 )
+
+type FileInfo struct {
+	Path      string
+	Name      string      // base name of the file
+	Size      int64       // length in bytes for regular files; system-dependent for others
+	Mode      fs.FileMode // file mode bits
+	ModTime   string      // modification time
+	IsDir     bool        // abbreviation for Mode().IsDir()
+	UserName  string
+	GroupName string
+	// Sys     fs.any      // underlying data source (can return nil)
+}
 
 // Get File Info
 func GetFileInfo(path string) fs.FileInfo {
@@ -38,6 +51,41 @@ func ReadDir(path string) []fs.FileInfo {
 		log.Panic(err)
 	}
 	return fileInfoList
+}
+
+// read dir all files recursively
+func ReadLocalDirAll(path string) []FileInfo {
+	log.Println("Trace ReadDirAll.", path)
+	var file_list []FileInfo
+	fileInfoList, err := os.ReadDir(path)
+	if err != nil {
+		log.Panic(err)
+	}
+	// convert []fs.DirEntry to FileInfo struct
+	for _, file := range fileInfoList {
+		if file.Name() == ".DS_Store" {
+			continue
+		}
+		info, _ := file.Info()
+		file_list = append(file_list, FileInfo{
+			Name: file.Name(),
+			Size: info.Size(),
+			// UserName: info.Sys().(*syscall.Stat_t).Uid,
+			// GroupName: file.Sys().(*syscall.Stat_t).Gid,
+			Mode:    info.Mode(),
+			ModTime: info.ModTime().String(),
+			IsDir:   file.IsDir(),
+			Path:    filepath.Join(path, file.Name()),
+		})
+	}
+	// reverse next layer file list
+	for _, fileInfo := range file_list {
+		if fileInfo.IsDir {
+			file_list = append(file_list, ReadLocalDirAll(fileInfo.Path)...)
+		}
+	}
+
+	return file_list
 }
 
 // 判断所给路径文件/文件夹是否存在
