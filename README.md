@@ -71,3 +71,6 @@ go build -o filebird
 - local path: `/root/path...`
 - remote path: `ServerName:/root/Path...`
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=dev-lake/FileBird&type=Date)](https://star-history.com/#dev-lake/FileBird&Date)
