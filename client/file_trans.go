@@ -199,74 +199,88 @@ func DownloadDir(remote ServerInfo, local_path string, remote_path string) error
 }
 
 // transmit file from remote to remote
-func TransmitFile(src ServerInfo, dst ServerInfo, src_path string, dst_path string) {
+func TransmitFile(src ServerInfo, dst ServerInfo, src_path string, dst_path string) error {
 	log.Println("trace transmit file from", src.Addr, "to", dst.Addr)
-
-	// get remote file meta info
-	infoClient := pb.NewFileInfoClient(GenGRPCConn(src.Addr, int(src.Port)))
-	info_res, err := infoClient.GetFileInfo(
-		context.Background(), &pb.FileReq{FilePath: src_path},
-	)
+	// get remote dir all files
+	files, err := GetRemoteDirAllFiles(&src, src_path)
 	if err != nil {
-		log.Fatalf("Call Route err: %v", err)
+		return err
 	}
-
-	// init progress
-	progress := progressbar.DefaultBytes(int64(info_res.Size), "transmitting")
-
-	// Connect to server
-	src_conn := GenGRPCConn(src.Addr, int(src.Port))
-	dst_conn := GenGRPCConn(dst.Addr, int(dst.Port))
-	defer src_conn.Close()
-	defer dst_conn.Close()
-
-	// Establish gRPC connection
-	src_client := pb.NewFileTransClient(src_conn)
-	dst_client := pb.NewFileTransClient(dst_conn)
-
-	// 下载流
-	src_stream, err := src_client.Download(
-		context.Background(),
-		&pb.DownloadReq{
-			Path: src_path,
-		},
-	)
-	if err != nil {
-		log.Fatalf("call download err: %v", err)
-	}
-
-	// 上传流
-	file_meta := metadata.New(map[string]string{
-		"name":        "",
-		"origin_path": src_path,
-		"remote_path": dst_path,
-		// "size":        string(local_file_info.Size()),
-		// "mode":        string(local_file_info.Mode()),
-		"modify_time": "",
-		"md5":         "",
-	})
-	ctx := metadata.NewOutgoingContext(context.Background(), file_meta)
-	dst_stream, err := dst_client.Upload(ctx)
-	if err != nil {
-		log.Fatalf("call upload err: %v", err)
-	}
-
-	for {
-		rep, err := src_stream.Recv()
-		if err != nil {
-			if err == io.EOF {
-				log.Println("Transmit success")
-				src_stream.CloseSend()
-				break
-			} else {
-				log.Fatalf("receive file err: %v", err)
+	// transmit files
+	for _, file := range files {
+		fmt.Println("transmit", file.Path, dst_path+file.Path[len(src_path):])
+		dst_path_final := dst_path + file.Path[len(src_path):]
+		if file.IsDir {
+			MakeRemoteDir(dst, dst_path_final)
+		} else {
+			// get remote file meta info
+			infoClient := pb.NewFileInfoClient(GenGRPCConn(src.Addr, int(src.Port)))
+			info_res, err := infoClient.GetFileInfo(
+				context.Background(), &pb.FileReq{FilePath: src_path},
+			)
+			if err != nil {
+				log.Fatalf("Call Route err: %v", err)
 			}
+
+			// Connect to server
+			src_conn := GenGRPCConn(src.Addr, int(src.Port))
+			dst_conn := GenGRPCConn(dst.Addr, int(dst.Port))
+			defer src_conn.Close()
+			defer dst_conn.Close()
+
+			// Establish gRPC connection
+			src_client := pb.NewFileTransClient(src_conn)
+			dst_client := pb.NewFileTransClient(dst_conn)
+
+			// 下载流
+			src_stream, err := src_client.Download(
+				context.Background(),
+				&pb.DownloadReq{
+					Path: file.Path,
+				},
+			)
+			if err != nil {
+				log.Fatalf("call download err: %v", err)
+			}
+
+			// 上传流
+			file_meta := metadata.New(map[string]string{
+				"name":        "",
+				"origin_path": src_path,
+				"remote_path": dst_path_final,
+				// "size":        string(local_file_info.Size()),
+				// "mode":        string(local_file_info.Mode()),
+				"modify_time": "",
+				"md5":         "",
+			})
+			ctx := metadata.NewOutgoingContext(context.Background(), file_meta)
+			dst_stream, err := dst_client.Upload(ctx)
+			if err != nil {
+				log.Fatalf("call upload err: %v", err)
+			}
+
+			// init progress
+			progress := progressbar.DefaultBytes(int64(info_res.Size), "transmitting")
+			for {
+				rep, err := src_stream.Recv()
+				if err != nil {
+					if err == io.EOF {
+						log.Println("Transmit success")
+						src_stream.CloseSend()
+						break
+					} else {
+						log.Panicln("receive file err:", err)
+					}
+				}
+				err = dst_stream.Send(&pb.UploadReq{Data: rep.Data})
+				if err != nil {
+					log.Fatalf("send file err: %v", err)
+				}
+				// show progress
+				progress.Add(len(rep.Data))
+			}
+
 		}
-		err = dst_stream.Send(&pb.UploadReq{Data: rep.Data})
-		if err != nil {
-			log.Fatalf("send file err: %v", err)
-		}
-		// show progress
-		progress.Add(len(rep.Data))
 	}
+	return nil
 }

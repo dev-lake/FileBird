@@ -63,7 +63,7 @@ func (s *FileTransService) Download(req *pb.DownloadReq, stream pb.FileTrans_Dow
 			if err == io.EOF {
 				return nil
 			} else {
-				return status.Error(codes.Unknown, "cannot receive file data")
+				return status.Error(codes.Unknown, err.Error())
 			}
 		}
 		if err := stream.Send(&pb.DownloadRep{
