@@ -1,11 +1,12 @@
 syntax = "proto3";
 
-option go_package = "../server/grpc";
-// option go_package = "../client/grpc";
+// option go_package = "../server/grpc";
+option go_package = "../client/grpc";
 
 service FileInfo {
     rpc GetFileInfo(FileReq) returns (RegularFileInfo) {};
     rpc GetDirFileInfo(FileReq) returns (DirFileInfoList) {};
+    rpc GetDirAllFiles(FileReq) returns (DirFileInfoList) {};
     rpc IsFileExist(FileReq) returns (FileExistRep) {};
     rpc FileIsDir(FileReq) returns (FileIsDirRep) {};
 }

@@ -171,6 +171,7 @@ func DownloadFile(remote ServerInfo, local_path string, remote_path string) {
 	}
 }
 
+// download file recursively
 func DownloadDir(remote ServerInfo, local_path string, remote_path string) error {
 	log.Println("trace DownloadDir", remote_path, "to", local_path)
 	// get remote dir all files
@@ -280,6 +281,27 @@ func TransmitFile(src ServerInfo, dst ServerInfo, src_path string, dst_path stri
 				progress.Add(len(rep.Data))
 			}
 
+		}
+	}
+	return nil
+}
+
+// transmit file from remote to remote
+func TransmitDir(src ServerInfo, dst ServerInfo, src_path string, dst_path string) error {
+	log.Println("trace transmit dir from", src.Addr, "to", dst.Addr)
+	// get remote dir all files
+	files, err := GetRemoteDirAllFiles(&src, src_path)
+	if err != nil {
+		return err
+	}
+	// transmit files
+	for _, file := range files {
+		fmt.Println("transmit", file.Path, dst_path+file.Path[len(src_path):])
+		dst_path_final := dst_path + file.Path[len(src_path):]
+		if file.IsDir {
+			MakeRemoteDir(dst, dst_path_final)
+		} else {
+			TransmitFile(src, dst, file.Path, dst_path_final)
 		}
 	}
 	return nil

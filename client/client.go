@@ -422,7 +422,7 @@ func CopyFile(src string, dst string) (err error) {
 			return nil
 		}
 	} else { // 两个远程
-		TransmitFile(src_server, dst_server, src_path_final, dst_path_final)
+		TransmitDir(src_server, dst_server, src_path_final, dst_path_final)
 	}
 	return err
 }
