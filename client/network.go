@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"google.golang.org/grpc"
 	pb "lake.dev/filebird/client/grpc"
@@ -31,7 +32,8 @@ func CheckGRPCServerStatus(addr string, port int) bool {
 	}
 	defer conn.Close()
 	grpcClient := pb.NewUtilsClient(conn)
-	_, err = grpcClient.Ping(context.Background(), &pb.PingReq{})
+	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	_, err = grpcClient.Ping(ctx, &pb.PingReq{})
 	if err != nil {
 		return false
 	}

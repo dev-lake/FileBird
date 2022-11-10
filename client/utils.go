@@ -25,12 +25,12 @@ func ShowServerTable(servers []ServerInfo, filter string) {
 	t.AppendHeader(table.Row{"#", "Name", "Addr", "Port", "User", "Password", "HomeDir", "Pwd", "Description"})
 	if filter == "" {
 		for i, server := range servers {
-			t.AppendRow(table.Row{i, server.Name, server.Addr, server.Port, server.User, server.Pass, server.Home, server.Pwd, server.Desc})
+			t.AppendRow(table.Row{i, GetServerStatus(&server) + server.Name, server.Addr, server.Port, server.User, server.Pass, server.Home, server.Pwd, server.Desc})
 		}
 	} else {
 		for i, server := range servers {
 			if server.Name == filter {
-				t.AppendRow(table.Row{i, server.Name, server.Addr, server.Port, server.User, server.Pass, server.Home, server.Pwd, server.Desc})
+				t.AppendRow(table.Row{i, GetServerStatus(&server) + server.Name, server.Addr, server.Port, server.User, server.Pass, server.Home, server.Pwd, server.Desc})
 			}
 		}
 	}

@@ -22,7 +22,7 @@
 - 增加身份验证
 - ~~在添加服务器时验证可用性、用户可用性验证~~
 - ~~Server 端增加配置文件，配置监听地址~~(complete)
-- show_server show server status
+- ~~show_server show server status~~(complete)
 - Server 端做成服务
 - Hash Check
 - 本地、远程外链下载（http, https）
@@ -36,6 +36,7 @@
 - 本地、远程外链下载（http, https, ftp, sftp and so on.）
 - 远程路径补全
 - 用户权限
+- show_server 先显示基本信息，然后`loading`加载状态
 - GUI Client
 
 ## Compile

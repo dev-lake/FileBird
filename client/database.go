@@ -12,14 +12,15 @@ import (
 
 type ServerInfo struct {
 	gorm.Model
-	Name string `gorm:"unique"`
-	Addr string
-	Port int
-	User string // user name
-	Pass string // password
-	Home string // home directory
-	Pwd  string // current directory
-	Desc string // description
+	Name   string `gorm:"unique"`
+	Addr   string
+	Port   int
+	User   string // user name
+	Pass   string // password
+	Home   string // home directory
+	Pwd    string // current directory
+	Desc   string // description
+	Online bool   // server status
 }
 
 var (
@@ -113,6 +114,15 @@ func ShowServer(db *gorm.DB) []ServerInfo {
 	var servers []ServerInfo
 	db.Find(&servers)
 	return servers
+}
+
+// get server status
+func GetServerStatus(server *ServerInfo) string {
+	if CheckGRPCServerStatus(server.Addr, server.Port) {
+		return "🟢"
+	} else {
+		return "🔴"
+	}
 }
 
 // get server pwd field
