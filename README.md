@@ -26,6 +26,7 @@
 - Server 端做成服务
 - Hash Check
 - 本地、远程外链下载（http, https）
+- 实现跨平台编译
 
 ### PRO Version TODO
 - Transfer file directly from remote to remote 
@@ -61,6 +62,35 @@ go build -o filebird
 
 # show server
 ./filebird show_server
+
+# delete server
+./filebird del_server
+```
+
+### Get Info
+```bash
+# check dir file
+./filebird ls SERVERNAME:
+
+# check current directory
+./filebird pwd SERVERNAME:
+
+# change current dir
+./filebird cd SERVERNAME:/home
+
+# Get file info
+./bin/filebird-mac-arm64 info vm:filebird-server
+filebird-server 10.211.55.4 2000
+
+File Info
+---------
+Name: filebird-server
+Size: 12226427
+Owner: parallels parallels
+ModTime: 2023-08-20 16:01:02.573767628 +0800 CST
+IsDir: false
+Mode: -rwxr-xr-x
+Path: filebird-server
 ```
 
 ### Copy, Move, Delete
