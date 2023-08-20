@@ -27,7 +27,7 @@ var (
 func init() {
 	BinPath, _ = os.Executable()
 	BinHome = filepath.Dir(BinPath)
-	ConfigPath = filepath.Join(BinHome, "data", "config.ini")
+	ConfigPath = filepath.Join(BinHome, "../data", "config.ini")
 	Config = LoadConfig()
 	Addr = Config.Section("NORMAL").Key("ADDR").String()
 	Port = Config.Section("NORMAL").Key("PORT").String()

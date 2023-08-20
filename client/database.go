@@ -24,7 +24,7 @@ type ServerInfo struct {
 }
 
 var (
-	db_path = "data/filebird.db"
+	db_path = "../data/filebird.db"
 )
 
 func InitDB() *gorm.DB {
