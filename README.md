@@ -11,6 +11,10 @@
     <img alt="GitHub go.mod Go version (subdirectory of monorepo)" src="https://img.shields.io/github/go-mod/go-version/dev-lake/FileBird?filename=client%2Fgo.mod&style=for-the-badge">
 </p>
 
+<p align="center">
+    <img alt="GitHub go.mod Go version (subdirectory of monorepo)" src="resources/example.gif">
+</p>
+
 ## Features
 - Add server information
 - Show Server information
