@@ -1,7 +1,17 @@
-# File Bird
-**A Efficient File Transfer Software**
+<h1 align="center">
+  <br>
+  <img src="https://github.com/dev-lake/FileBird/blob/main/resources/logo.png?raw=true" alt="FileBird" width="400">
+  <!-- <br> -->
+  <!-- FileBird -->
+  <!-- <br> -->
+</h1>
 
-### Features
+<h4 align="center">A Efficient File Transfer Tool Powered by gRPC</h4>
+<p align="center">
+    <img alt="GitHub go.mod Go version (subdirectory of monorepo)" src="https://img.shields.io/github/go-mod/go-version/dev-lake/FileBird?filename=client%2Fgo.mod&style=for-the-badge">
+</p>
+
+## Features
 - Add server information
 - Show Server information
 - Delete Server
@@ -14,47 +24,22 @@
 - list local/remote file
 - make local/remote dir
 
-### TODO
-- ~~Show Progress bar~~ (complete)
-- ~~实现文件夹的递归传输~~ (complete)
-- ~~在数据库添加pwd字段，实现 `pwd/cd/ls` 命令和相对目录的传输~~(complete)
-- ~~限制 server 名称，不能有 local/localhost/: 等保留字段~~(complete)
-- 增加身份验证
-- ~~在添加服务器时验证可用性、用户可用性验证~~
-- ~~Server 端增加配置文件，配置监听地址~~(complete)
-- ~~show_server show server status~~(complete)
-- Server 端做成服务
-- Hash Check
-- 本地、远程外链下载（http, https）
-- 实现跨平台编译
 
-### PRO Version TODO
-- Transfer file directly from remote to remote 
-- Transmission rate limit
-- Encryption communication
-- User Rights Management
-- File Detail (Create time, Mod time, last open， Hash time and so on.)
-- 本地、远程外链下载（http, https, ftp, sftp and so on.）
-- 远程路径补全
-- 用户权限
-- show_server 先显示基本信息，然后`loading`加载状态
-- GUI Client
-
-## Compile
-### Server
+## How to Build
+### Build Server
 ```bash
 cd server/
 go mod tidy
 go build -o filebird-server
 ```
-### client
+### Build client
 ```bash
 cd client/
 go mod tidy
 go build -o filebird
 ```
 
-## Usage
+## How to Use
 ### Add & Show Server
 ```bash
 # add server
@@ -67,7 +52,7 @@ go build -o filebird
 ./filebird del_server
 ```
 
-### Get Info
+### Get File Info
 ```bash
 # check dir file
 ./filebird ls SERVERNAME:
@@ -104,6 +89,32 @@ Path: filebird-server
 - local path: `/root/path...`
 - remote path: `ServerName:/root/Path...`
 
-## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=dev-lake/FileBird&type=Date)](https://star-history.com/#dev-lake/FileBird&Date)
+## TODO
+- ~~Show Progress bar~~ (complete)
+- ~~实现文件夹的递归传输~~ (complete)
+- ~~在数据库添加pwd字段，实现 `pwd/cd/ls` 命令和相对目录的传输~~(complete)
+- ~~限制 server 名称，不能有 local/localhost/: 等保留字段~~(complete)
+- 增加身份验证
+- ~~在添加服务器时验证可用性、用户可用性验证~~
+- ~~Server 端增加配置文件，配置监听地址~~(complete)
+- ~~show_server show server status~~(complete)
+- Server 端做成服务
+- Hash Check
+- 本地、远程外链下载（http, https）
+- 实现跨平台编译
+
+## PRO Version TODO
+- Transfer file directly from remote to remote 
+- Transmission rate limit
+- Encryption communication
+- User Rights Management
+- File Detail (Create time, Mod time, last open， Hash time and so on.)
+- 本地、远程外链下载（http, https, ftp, sftp and so on.）
+- 远程路径补全
+- 用户权限
+- show_server 先显示基本信息，然后`loading`加载状态
+- GUI Client
+
+## License
+![GitHub](https://img.shields.io/github/license/dev-lake/FileBird?style=for-the-badge&color=green&cacheSeconds=3600)
