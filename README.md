@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-    <img alt="GitHub go.mod Go version (subdirectory of monorepo)" src="resources/example.gif">
+    <img alt="GitHub go.mod Go version (subdirectory of monorepo)" src="resources/example02.gif">
 </p>
 
 ## Features
